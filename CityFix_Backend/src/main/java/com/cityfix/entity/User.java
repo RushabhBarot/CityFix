@@ -1,28 +1,25 @@
 package com.cityfix.entity;
 
 import com.cityfix.entity.enums.Role;
-import jakarta.persistence.*;
 import lombok.*;
+import org.springframework.data.annotation.Id;
+import org.springframework.data.mongodb.core.mapping.Document;
 
-    @Entity
-    @Data
-    @Builder
-    @NoArgsConstructor
-    @AllArgsConstructor
-    @Table(name = "users")
-    public class User {
+@Document(collection = "users")
+@Data
+@Builder
+@NoArgsConstructor
+@AllArgsConstructor
+public class User {
 
-        @Id
-        @GeneratedValue(strategy = GenerationType.IDENTITY)
-        private Long id;
+    @Id
+    private String id; // MongoDB uses String (ObjectId)
 
-        private String fullName;
+    private String fullName;
 
-        @Column(unique = true)
-        private String email;
+    private String email; // Ensure unique at the MongoDB level (via index)
 
-        private String password;
+    private String password;
 
-        @Enumerated(EnumType.STRING)
-        private Role role;
+    private Role role;
 }

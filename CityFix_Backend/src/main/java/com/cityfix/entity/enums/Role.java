@@ -1,7 +1,7 @@
 package com.cityfix.entity.enums;
 
 public enum Role {
-    CITIZEN,
+    USER,
     WORKER,
     OFFICER,
     ADMIN
