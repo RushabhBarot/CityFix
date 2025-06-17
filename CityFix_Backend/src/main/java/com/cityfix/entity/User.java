@@ -1,10 +1,11 @@
+
 package com.cityfix.entity;
 
 import com.cityfix.entity.enums.Role;
-import com.cityfix.entity.enums.Department;
 import lombok.*;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.mapping.Document;
+import com.cityfix.entity.enums.Department;
 
 @Document(collection = "users")
 @Data
@@ -14,25 +15,22 @@ import org.springframework.data.mongodb.core.mapping.Document;
 public class User {
 
     @Id
-    private String id;
+    private String id; // MongoDB uses String (ObjectId)
 
     private String name;
-    private String email;
+
+    private String email; // Ensure unique at the MongoDB level (via index)
+
     private String password;
+    private Role role;
+    private String mobileNumber;
 
-    private Role role; // ADMIN, CITIZEN, WORKER
 
-    // Common to all
-    private byte[] profilePhoto;; // URL or Base64
-    private String location;     // Can be address string or lat-long
+    private byte[] avatarUrl;
+    private boolean active;
 
-    // Specific to WORKER
-    private Department department;  // e.g., SANITATION
-    private int tasksCompleted;
+    //worker specific
+    private Department department;
+    private byte[] idCardUrl;
 
-    // Specific to CITIZEN
-    private int totalReports;
-
-    // For ADMIN and WORKER only
-    private byte[] i_card; // file URL or base64 string
 }

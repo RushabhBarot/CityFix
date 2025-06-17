@@ -5,6 +5,7 @@ import com.cityfix.dtos.AuthRequest;
 import com.cityfix.dtos.AuthResponse;
 import com.cityfix.dtos.RegisterRequest;
 import com.cityfix.entity.User;
+import com.cityfix.entity.enums.Role;
 import com.cityfix.repository.UserRepository;
 import com.cityfix.security.JwtService;
 import lombok.RequiredArgsConstructor;
@@ -24,19 +25,36 @@ public class AuthService {
     private final PasswordEncoder passwordEncoder;
 
     public AuthResponse register(RegisterRequest request) {
-        User user = User.builder()
+
+        // Build the base user fields
+        User.UserBuilder userBuilder = User.builder()
                 .name(request.getName())
                 .email(request.getEmail())
                 .password(passwordEncoder.encode(request.getPassword()))
+                .mobileNumber(request.getMobileNumber())
                 .role(request.getRole())
-                .build();
+                .avatarUrl(request.getAvatarUrl()) ;
+
+
+        // Handle role-specific fields
+        if (request.getRole() == Role.WORKER) {
+            userBuilder.department(request.getDepartment());
+            userBuilder.idCardUrl(request.getIdCardUrl());
+            userBuilder.active(false); // Set active by default
+        }
+
+        // Build and save user
+        User user = userBuilder.build();
         userRepository.save(user);
 
+        // Generate JWT tokens
         String token = jwtService.generateToken(user.getEmail(), new HashMap<>());
         String refresh = jwtService.generateRefreshToken(user.getEmail());
 
         return new AuthResponse(token, refresh);
     }
+
+
 
     public AuthResponse login(AuthRequest request) {
         authenticationManager.authenticate(
