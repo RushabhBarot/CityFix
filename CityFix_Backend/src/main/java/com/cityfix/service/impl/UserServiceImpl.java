@@ -23,7 +23,7 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public List<User> getAllPendingWorkers() {
-        return userRepo.findByRoleAndIsActive(Role.WORKER, false);
+        return userRepo.findByRoleAndActive(Role.WORKER, false);
     }
 
     @Override

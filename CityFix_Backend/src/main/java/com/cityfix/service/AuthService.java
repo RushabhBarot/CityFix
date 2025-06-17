@@ -7,14 +7,18 @@ import com.cityfix.dtos.UserRequestDTO;
 import com.cityfix.entity.User;
 import com.cityfix.entity.enums.Role;
 import com.cityfix.repository.UserRepository;
+import com.cityfix.security.CustomUserDetails;
 import com.cityfix.security.JwtService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.authentication.*;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import java.io.IOException;
 import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 @Service
 @RequiredArgsConstructor
@@ -39,26 +43,41 @@ public class AuthService {
             userBuilder.department(request.getDepartment());
             userBuilder.idCardPhoto(request.getIdCard().getBytes());
             userBuilder.active(false); // Set active by default
+        } else {
+            userBuilder.active(true); // Citizens (and admins if ever registered via this flow)
         }
+
 
         User user = userBuilder.build();
         userRepository.save(user);
 
-        String token = jwtService.generateToken(user.getEmail(), new HashMap<>());
+        Map<String, Object> extraClaims = new HashMap<>();
+        extraClaims.put("roles", List.of(user.getRole().name()));
+
+
+        String token = jwtService.generateToken(user.getEmail(), extraClaims);
         String refresh = jwtService.generateRefreshToken(user.getEmail());
 
         return new AuthResponse(token, refresh);
     }
 
     public AuthResponse login(AuthRequest request) {
-        authenticationManager.authenticate(
-                new UsernamePasswordAuthenticationToken(
-                        request.getEmail(), request.getPassword()
-                )
-        );
+        try{
+            authenticationManager.authenticate(
+                    new UsernamePasswordAuthenticationToken(
+                            request.getEmail(), request.getPassword()
+                    )
+            );
+        }catch (Exception e){
+            e.printStackTrace();
+            throw new RuntimeException("Authentication failed: " + e.getMessage());
+        }
 
         var user = userRepository.findByEmail(request.getEmail()).orElseThrow();
-        String token = jwtService.generateToken(user.getEmail(), new HashMap<>());
+        Map<String, Object> extraClaims = new HashMap<>();
+        extraClaims.put("roles", List.of(user.getRole().name()));  // Add roles claim
+
+        String token = jwtService.generateToken(user.getEmail(), extraClaims);
         String refresh = jwtService.generateRefreshToken(user.getEmail());
 
         return new AuthResponse(token, refresh);
@@ -66,9 +85,18 @@ public class AuthService {
 
     public AuthResponse refreshToken(String refreshToken) {
         String username = jwtService.extractUsername(refreshToken);
-        if (!jwtService.isTokenValid(refreshToken, username)) {
+
+        User user = userRepository.findByEmail(username)
+                .orElseThrow(() -> new RuntimeException("User not found"));
+
+        UserDetails userDetails = new CustomUserDetails(user);
+
+        if (!jwtService.isTokenValid(refreshToken, userDetails)) {
             throw new RuntimeException("Invalid refresh token");
         }
+
+        Map<String, Object> extraClaims = new HashMap<>();
+        extraClaims.put("roles", List.of(user.getRole().name()));
 
         String newAccess = jwtService.generateToken(username, new HashMap<>());
         return new AuthResponse(newAccess, refreshToken);

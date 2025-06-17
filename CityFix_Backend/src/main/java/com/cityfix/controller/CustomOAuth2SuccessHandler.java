@@ -18,6 +18,8 @@ import org.springframework.web.bind.annotation.*;
 
 import java.io.IOException;
 import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 @Component
 @RequiredArgsConstructor
@@ -36,14 +38,15 @@ public class CustomOAuth2SuccessHandler implements AuthenticationSuccessHandler 
         User user = userRepository.findByEmail(email).orElseGet(() -> {
             User newUser = User.builder()
                     .email(email)
-                    .fullName(name)
+                    .name(name)
                     .password("") // No password for OAuth users
                     .role(Role.USER)
+                    .active(true)
                     .build();
             return userRepository.save(newUser);
         });
 
-        String token = jwtService.generateToken(user.getEmail(), new HashMap<>());
+        String token = jwtService.generateToken(user.getEmail(), Map.of("roles", List.of(user.getRole().name())));
         String refreshToken = jwtService.generateRefreshToken(user.getEmail());
 
         // Send token as JSON response

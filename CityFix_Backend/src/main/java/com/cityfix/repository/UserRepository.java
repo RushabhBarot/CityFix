@@ -13,5 +13,5 @@ public interface UserRepository extends MongoRepository<User, String> {
 
     boolean existsByEmail(String adminEmail);
 
-    List<User> findByRoleAndIsActive(Role role, boolean b);
+    List<User> findByRoleAndActive(Role role, boolean b);
 }
