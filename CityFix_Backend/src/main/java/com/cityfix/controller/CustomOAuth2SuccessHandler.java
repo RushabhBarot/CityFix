@@ -36,7 +36,7 @@ public class CustomOAuth2SuccessHandler implements AuthenticationSuccessHandler 
         User user = userRepository.findByEmail(email).orElseGet(() -> {
             User newUser = User.builder()
                     .email(email)
-                    .fullName(name)
+                    .name(name)
                     .password("") // No password for OAuth users
                     .role(Role.USER)
                     .build();
