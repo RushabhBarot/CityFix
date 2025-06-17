@@ -25,11 +25,11 @@ public class User {
     private String mobileNumber;
     private Role role;
 
-    private String avatarUrl;          // Profile picture
+    private byte[] profilePhoto;          // Profile picture
     private boolean active;            // For worker approval
 
     //worker specific
     private Department department;
-    private String idCardUrl;
+    private byte[] idCardPhoto;
 
 }

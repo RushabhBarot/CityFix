@@ -3,10 +3,13 @@ package com.cityfix.controller;
 
 import com.cityfix.dtos.AuthRequest;
 import com.cityfix.dtos.AuthResponse;
-import com.cityfix.dtos.RegisterRequest;
+import com.cityfix.dtos.UserRequestDTO;
 import com.cityfix.service.AuthService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.*;
+
+import java.io.IOException;
 
 @RestController
 @RequestMapping("/auth")
@@ -15,8 +18,8 @@ public class AuthController {
 
     private final AuthService authService;
 
-    @PostMapping("/register")
-    public AuthResponse register(@RequestBody RegisterRequest request) {
+    @PostMapping(value = "/register",consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    public AuthResponse register(@ModelAttribute UserRequestDTO request) throws IOException {
         return authService.register(request);
     }
 

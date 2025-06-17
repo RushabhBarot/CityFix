@@ -3,8 +3,9 @@ package com.cityfix.service;
 
 import com.cityfix.dtos.AuthRequest;
 import com.cityfix.dtos.AuthResponse;
-import com.cityfix.dtos.RegisterRequest;
+import com.cityfix.dtos.UserRequestDTO;
 import com.cityfix.entity.User;
+import com.cityfix.entity.enums.Role;
 import com.cityfix.repository.UserRepository;
 import com.cityfix.security.JwtService;
 import lombok.RequiredArgsConstructor;
@@ -12,6 +13,7 @@ import org.springframework.security.authentication.*;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
+import java.io.IOException;
 import java.util.HashMap;
 
 @Service
@@ -23,13 +25,23 @@ public class AuthService {
     private final AuthenticationManager authenticationManager;
     private final PasswordEncoder passwordEncoder;
 
-    public AuthResponse register(RegisterRequest request) {
-        User user = User.builder()
-                .fullName(request.getFullName())
+    public AuthResponse register(UserRequestDTO request) throws IOException {
+        User.UserBuilder userBuilder = User.builder()
+                .name(request.getName())
                 .email(request.getEmail())
                 .password(passwordEncoder.encode(request.getPassword()))
+                .mobileNumber(request.getMobileNumber())
                 .role(request.getRole())
-                .build();
+                .profilePhoto(request.getProfilePhoto().getBytes());
+
+        // Handle role-specific fields
+        if (request.getRole() == Role.WORKER) {
+            userBuilder.department(request.getDepartment());
+            userBuilder.idCardPhoto(request.getIdCard().getBytes());
+            userBuilder.active(false); // Set active by default
+        }
+
+        User user = userBuilder.build();
         userRepository.save(user);
 
         String token = jwtService.generateToken(user.getEmail(), new HashMap<>());
