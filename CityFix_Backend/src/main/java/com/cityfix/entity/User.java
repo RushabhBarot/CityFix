@@ -22,11 +22,14 @@ public class User {
 
     private String password;
 
+    private String mobileNumber;
     private Role role;
 
-    private Department department;
+    private String avatarUrl;          // Profile picture
+    private boolean active;            // For worker approval
 
-    // Profile statistics
-    private int totalReports;     // For citizen
-    private int tasksCompleted;   // For worker
+    //worker specific
+    private Department department;
+    private String idCardUrl;
+
 }
