@@ -28,7 +28,7 @@ public class CustomUserDetails implements UserDetails {
 
     @Override
     public String getUsername() {
-        return user.getEmail();  // Assuming email is used as username
+        return user.getEmail(); // Assuming email is used as username
     }
 
     @Override
@@ -48,7 +48,7 @@ public class CustomUserDetails implements UserDetails {
 
     @Override
     public boolean isEnabled() {
-        return true;  // Only active users can login
+        return user.isActive();
     }
 
     public User getUser() {

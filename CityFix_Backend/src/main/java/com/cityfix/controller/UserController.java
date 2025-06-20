@@ -18,21 +18,34 @@ public class UserController {
     private final UserService userService;
 
     // 1. Get current user profile (accessible to any logged-in user)
-    @GetMapping("/profile/{id}")
-    public ResponseEntity<User> getProfile(@PathVariable String id) throws ChangeSetPersister.NotFoundException {
+    @PreAuthorize("hasRole('USER')")
+    @GetMapping("/citizen/profile/{id}")
+    public ResponseEntity<User> getCitizenProfile(@PathVariable String id) throws ChangeSetPersister.NotFoundException {
         return ResponseEntity.ok(userService.getProfile(id));
     }
 
-    // 2. Get all workers who are pending approval (admin-only)
+    @PreAuthorize("hasRole('WORKER')")
+    @GetMapping("/worker/profile/{id}")
+    public ResponseEntity<User> getWorkerProfile(@PathVariable String id) throws ChangeSetPersister.NotFoundException {
+        return ResponseEntity.ok(userService.getProfile(id));
+    }
+
     @PreAuthorize("hasRole('ADMIN')")
-    @GetMapping("/pending-workers")
+    @GetMapping("/admin/profile/{id}")
+    public ResponseEntity<User> getAdminProfile(@PathVariable String id) throws ChangeSetPersister.NotFoundException {
+        return ResponseEntity.ok(userService.getProfile(id));
+    }
+
+
+    @PreAuthorize("hasRole('ADMIN')")
+    @GetMapping("/admin/pending-workers")
     public ResponseEntity<List<User>> getAllPendingWorkers() {
         return ResponseEntity.ok(userService.getAllPendingWorkers());
     }
 
-    // 3. Approve a worker by ID (admin-only)
+
     @PreAuthorize("hasRole('ADMIN')")
-    @PutMapping("/approve-worker/{id}")
+    @PutMapping("/admin/approve-worker/{id}")
     public ResponseEntity<User> approveWorker(@PathVariable String id) {
         return ResponseEntity.ok(userService.approveWorker(id));
     }

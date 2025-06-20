@@ -20,6 +20,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+
+
 @Service
 @RequiredArgsConstructor
 public class AuthService {
@@ -35,18 +37,21 @@ public class AuthService {
                 .email(request.getEmail())
                 .password(passwordEncoder.encode(request.getPassword()))
                 .mobileNumber(request.getMobileNumber())
-                .role(request.getRole())
-                .profilePhoto(request.getProfilePhoto().getBytes());
+                .role(request.getRole());
+
+        // Handle optional profile photo
+        if (request.getProfilePhoto() != null && !request.getProfilePhoto().isEmpty()) {
+            userBuilder.profilePhoto(request.getProfilePhoto().getBytes());
+        }
 
         // Handle role-specific fields
         if (request.getRole() == Role.WORKER) {
             userBuilder.department(request.getDepartment());
             userBuilder.idCardPhoto(request.getIdCard().getBytes());
-            userBuilder.active(false); // Set active by default
+            userBuilder.active(false); // Workers are inactive by default
         } else {
-            userBuilder.active(true); // Citizens (and admins if ever registered via this flow)
+            userBuilder.active(true); // Citizens (and admins if registered this way)
         }
-
 
         User user = userBuilder.build();
         userRepository.save(user);
@@ -54,12 +59,12 @@ public class AuthService {
         Map<String, Object> extraClaims = new HashMap<>();
         extraClaims.put("roles", List.of(user.getRole().name()));
 
-
         String token = jwtService.generateToken(user.getEmail(), extraClaims);
         String refresh = jwtService.generateRefreshToken(user.getEmail());
 
         return new AuthResponse(token, refresh);
     }
+
 
     public AuthResponse login(AuthRequest request) {
         try{
