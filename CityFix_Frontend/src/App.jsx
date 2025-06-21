@@ -3,7 +3,9 @@ import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-d
 import { AuthProvider } from './components/Auth/AuthContext';
 import Login from './components/Auth/Login';
 import Register from './components/Auth/Register';
-import Dashboard from './components/Dashboard/Dashboard';
+import User_Dashboard from './components/Dashboard/User_Dashboard';
+import Worker_Dashboard from './components/Dashboard/Worker_Dashboard';
+import Admin_Dashboard from './components/Dashboard/Admin_Dashboard';
 import PublicRoute from './services/PublicRoutes';
 import ProtectedRoute from './services/ProtectedRoutes';
 import Logout from './services/Logout';
@@ -28,7 +30,17 @@ const App = () => {
           {/* Protected Routes */}
           <Route path="/dashboard" element={
             <ProtectedRoute>
-              <Dashboard />
+              <User_Dashboard />
+            </ProtectedRoute>
+          } />
+          <Route path="/worker-dashboard" element={
+            <ProtectedRoute>
+              <Worker_Dashboard />
+            </ProtectedRoute>
+          } />
+          <Route path="/admin-dashboard" element={
+            <ProtectedRoute>
+              <Admin_Dashboard />
             </ProtectedRoute>
           } />
           

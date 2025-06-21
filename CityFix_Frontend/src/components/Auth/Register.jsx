@@ -187,18 +187,30 @@ const Register = () => {
           </div>
 
           {formData.role === 'WORKER' && (
-            <Input
-              label="Department"
-              value={formData.department}
-              onChange={handleChange('department')}
-              error={errors.department}
-              placeholder="Enter your department"
-              required
-            />
+            <div className="mb-4">
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Department
+              </label>
+              <select
+                value={formData.department}
+                onChange={handleChange('department')}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                required
+              >
+                <option value="">Select Department</option>
+                <option value="WASTE_MANAGEMENT">Waste Management</option>
+                <option value="PARKING_ENFORCEMENT">Parking Enforcement</option>
+                <option value="ROAD_MAINTENANCE">Road Maintenance</option>
+              </select>
+              {errors.department && (
+                <p className="text-red-500 text-xs mt-1">{errors.department}</p>
+              )}
+            </div>
           )}
 
           <FileUpload
             label="Profile Photo"
+            name="profilePhoto"
             onChange={handleFileChange('profilePhoto')}
             error={errors.profilePhoto}
             accept="image/*"
@@ -208,6 +220,7 @@ const Register = () => {
           {formData.role === 'WORKER' && (
             <FileUpload
               label="ID Card"
+              name="idCard"
               onChange={handleFileChange('idCard')}
               error={errors.idCard}
               accept="image/*"

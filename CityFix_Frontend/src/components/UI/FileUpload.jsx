@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { Upload, X } from 'lucide-react';
 import './FileUpload.css';
 
-const FileUpload = ({ label, onChange, error, accept = "image/*", required = false }) => {
+const FileUpload = ({ label, onChange, error, accept = "image/*", required = false, name }) => {
   const [preview, setPreview] = useState(null);
   const [fileName, setFileName] = useState('');
 
@@ -40,6 +40,7 @@ const FileUpload = ({ label, onChange, error, accept = "image/*", required = fal
           className="file-upload-input"
           id={`file-${label}`}
           required={required}
+          name={name}
         />
         <label
           htmlFor={`file-${label}`}

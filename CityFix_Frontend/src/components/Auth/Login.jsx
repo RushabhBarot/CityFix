@@ -40,6 +40,19 @@ const Login = () => {
     return Object.keys(newErrors).length === 0;
   };
 
+  const parseJwt = (token) => {
+    if (!token) return {};
+    const base64Url = token.split('.')[1];
+    const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
+    const jsonPayload = decodeURIComponent(
+      atob(base64)
+        .split('')
+        .map(c => '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2))
+        .join('')
+    );
+    return JSON.parse(jsonPayload);
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     
@@ -49,7 +62,24 @@ const Login = () => {
     try {
       const response = await apiService.login(formData);
       login(response);
-      navigate('/dashboard');
+      // Role-based redirect (robust)
+      const jwtPayload = parseJwt(response.accessToken);
+      console.log('JWT payload:', jwtPayload);
+      let role = null;
+      if (Array.isArray(jwtPayload.roles)) {
+        role = jwtPayload.roles[0];
+      } else if (typeof jwtPayload.roles === 'string') {
+        role = jwtPayload.roles;
+      } else if (typeof jwtPayload.role === 'string') {
+        role = jwtPayload.role;
+      }
+      if (role === 'ADMIN') {
+        navigate('/admin-dashboard');
+      } else if (role === 'WORKER') {
+        navigate('/worker-dashboard');
+      } else if(role === 'CITIZEN') {
+        navigate('/dashboard');
+      }
     } catch (error) {
       setErrors({ submit: error.message });
     } finally {

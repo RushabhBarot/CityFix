@@ -38,5 +38,14 @@ public class UserServiceImpl implements UserService {
         return userRepo.save(user);
     }
 
-}
+    @Override
+    public List<User> getUsersByRoleAndActive(com.cityfix.entity.enums.Role role, boolean active) {
+        return userRepo.findByRoleAndActive(role, active);
+    }
 
+    @Override
+    public List<User> getActiveWorkersByDepartment(String department) {
+        return userRepo.findByRoleAndActiveAndDepartment(Role.WORKER, true, department);
+    }
+
+}

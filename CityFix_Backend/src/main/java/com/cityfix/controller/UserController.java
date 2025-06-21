@@ -36,18 +36,23 @@ public class UserController {
         return ResponseEntity.ok(userService.getProfile(id));
     }
 
-
     @PreAuthorize("hasRole('ADMIN')")
     @GetMapping("/admin/pending-workers")
     public ResponseEntity<List<User>> getAllPendingWorkers() {
         return ResponseEntity.ok(userService.getAllPendingWorkers());
     }
 
-
     @PreAuthorize("hasRole('ADMIN')")
     @PutMapping("/admin/approve-worker/{id}")
     public ResponseEntity<User> approveWorker(@PathVariable String id) {
         return ResponseEntity.ok(userService.approveWorker(id));
     }
-}
 
+    @GetMapping("/admin/active-workers")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<List<User>> getActiveWorkersByDepartment(@RequestParam String department) {
+        return ResponseEntity.ok(userService.getActiveWorkersByDepartment(department));
+    }
+
+
+}

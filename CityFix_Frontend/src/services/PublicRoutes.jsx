@@ -2,6 +2,19 @@ import React, { useContext } from 'react';
 import { Navigate } from 'react-router-dom';
 import { AuthContext } from '../components/Auth/AuthContext';
 
+const parseJwt = (token) => {
+  if (!token) return {};
+  const base64Url = token.split('.')[1];
+  const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
+  const jsonPayload = decodeURIComponent(
+    atob(base64)
+      .split('')
+      .map(c => '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2))
+      .join('')
+  );
+  return JSON.parse(jsonPayload);
+};
+
 const PublicRoute = ({ children }) => {
   const { user, loading } = useContext(AuthContext);
 
@@ -13,7 +26,26 @@ const PublicRoute = ({ children }) => {
     );
   }
 
-  return user ? <Navigate to="/dashboard" replace /> : children;
+  if (user && user.accessToken) {
+    const jwtPayload = parseJwt(user.accessToken);
+    let role = null;
+    if (Array.isArray(jwtPayload.roles)) {
+      role = jwtPayload.roles[0];
+    } else if (typeof jwtPayload.roles === 'string') {
+      role = jwtPayload.roles;
+    } else if (typeof jwtPayload.role === 'string') {
+      role = jwtPayload.role;
+    }
+    if (role === 'ADMIN') {
+      return <Navigate to="/admin-dashboard" replace />;
+    } else if (role === 'WORKER') {
+      return <Navigate to="/worker-dashboard" replace />;
+    } else {
+      return <Navigate to="/dashboard" replace />;
+    }
+  }
+
+  return children;
 };
 
 export default PublicRoute;

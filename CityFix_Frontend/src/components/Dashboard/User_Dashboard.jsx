@@ -1,7 +1,7 @@
 import React, { useContext, useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { AuthContext } from '../Auth/AuthContext';
-import './Dashboard.css';
+import './User_Dashboard.css';
 
 const API_BASE = 'http://localhost:8080';
 
@@ -214,8 +214,8 @@ const Dashboard = () => {
               <form className="dashboard-form" onSubmit={handleUpdate}>
                 <input type="text" placeholder="Description" value={editForm.description} onChange={e => setEditForm(f => ({ ...f, description: e.target.value }))} required />
                 <input type="text" placeholder="Location" value={editForm.location} onChange={e => setEditForm(f => ({ ...f, location: e.target.value }))} required />
-                <input type="number" placeholder="Latitude" value={editForm.latitude} onChange={e => setEditForm(f => ({ ...f, latitude: e.target.value }))} required />
-                <input type="number" placeholder="Longitude" value={editForm.longitude} onChange={e => setEditForm(f => ({ ...f, longitude: e.target.value }))} required />
+                {/* <input type="number" placeholder="Latitude" value={editForm.latitude} onChange={e => setEditForm(f => ({ ...f, latitude: e.target.value }))} required />
+                <input type="number" placeholder="Longitude" value={editForm.longitude} onChange={e => setEditForm(f => ({ ...f, longitude: e.target.value }))} required /> */}
                 <select value={editForm.department} onChange={e => setEditForm(f => ({ ...f, department: e.target.value }))} required>
                   <option value="">Select Department</option>
                   <option value="WASTE_MANAGEMENT">Waste Management</option>
@@ -231,8 +231,8 @@ const Dashboard = () => {
               <>
                 <div><b>Description:</b> {report.description}</div>
                 <div><b>Location:</b> {report.location}</div>
-                <div><b>Latitude:</b> {report.latitude}</div>
-                <div><b>Longitude:</b> {report.longitude}</div>
+                {/* <div><b>Latitude:</b> {report.latitude}</div>
+                <div><b>Longitude:</b> {report.longitude}</div> */}
                 <div><b>Department:</b> {report.department}</div>
                 <div><b>Status:</b> {report.status}</div>
                 <div><b>Created:</b> {new Date(report.createdAt).toLocaleString()}</div>

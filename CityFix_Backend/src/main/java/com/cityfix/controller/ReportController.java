@@ -98,7 +98,7 @@ public class ReportController {
     }
 
     @PostMapping("/admin/assign-reports")
-    @PreAuthorize("hasRole('ADMIN')")
+
     public ResponseEntity<Report> assignReport(@RequestParam String reportId,
                                                @RequestParam String workerId) {
         return ResponseEntity.ok(reportService.assignReport(reportId, workerId));
