@@ -51,6 +51,30 @@ const apiService = {
 
     return response.json();
   },
+
+  getWorkerProfile: async (workerId, accessToken) => {
+    const response = await fetch(`${API_BASE_URL}/users/worker/profile/${workerId}`, {
+      headers: {
+        'Authorization': `Bearer ${accessToken}`,
+      },
+    });
+    if (!response.ok) {
+      throw new Error('Failed to fetch worker profile');
+    }
+    return response.json();
+  },
+
+  getAssignedReports: async (workerEmail, accessToken) => {
+    const response = await fetch(`${API_BASE_URL}/reports/worker/assigned?workerId=${workerEmail}`, {
+      headers: {
+        'Authorization': `Bearer ${accessToken}`,
+      },
+    });
+    if (!response.ok) {
+      throw new Error('Failed to fetch assigned reports');
+    }
+    return response.json();
+  },
 };
 
 export default apiService;

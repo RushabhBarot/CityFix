@@ -17,8 +17,13 @@ public class UserServiceImpl implements UserService {
     private final UserRepository userRepo;
 
     @Override
-    public User getProfile(String userId) throws ChangeSetPersister.NotFoundException {
-        return userRepo.findById(userId).orElseThrow(() -> new ChangeSetPersister.NotFoundException());
+    public User getProfile(String email) throws ChangeSetPersister.NotFoundException {
+        return userRepo.findById(email).orElseThrow(() -> new ChangeSetPersister.NotFoundException());
+    }
+
+    @Override
+    public User getProfileByEmail(String email) throws ChangeSetPersister.NotFoundException {
+        return userRepo.findByEmail(email).orElseThrow(() -> new ChangeSetPersister.NotFoundException());
     }
 
     @Override

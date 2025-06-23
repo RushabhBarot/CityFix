@@ -7,7 +7,9 @@ import org.springframework.data.crossstore.ChangeSetPersister;
 import java.util.List;
 
 public interface UserService {
-    User getProfile(String userId) throws ChangeSetPersister.NotFoundException;
+    User getProfile(String email) throws ChangeSetPersister.NotFoundException;
+
+    User getProfileByEmail(String email) throws ChangeSetPersister.NotFoundException;
 
     List<User> getAllPendingWorkers(); // for admin
 

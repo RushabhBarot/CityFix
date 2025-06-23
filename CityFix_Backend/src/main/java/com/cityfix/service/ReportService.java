@@ -15,7 +15,7 @@ public interface ReportService {
     Report updateReport(String reportId, ReportUpdateDTO dto, String citizenId);
     void deleteReport(String reportId, String citizenId);
     List<Report> getReportsAssignedToWorker(String workerId , ReportStatus status);
-    Report updateStatus(String reportId, ReportStatus status, String remarks, MultipartFile afterPhoto);
+    Report updateStatus(String reportId, ReportStatus status, MultipartFile afterPhoto);
     List<Report> getAllReports(ReportFilterDTO filter);
     Report assignReport(String reportId, String workerId);
 }

@@ -25,9 +25,10 @@ public class UserController {
     }
 
     @PreAuthorize("hasRole('WORKER')")
-    @GetMapping("/worker/profile/{id}")
-    public ResponseEntity<User> getWorkerProfile(@PathVariable String id) throws ChangeSetPersister.NotFoundException {
-        return ResponseEntity.ok(userService.getProfile(id));
+    @GetMapping("/worker/profile/{email}")
+    public ResponseEntity<User> getWorkerProfile(@PathVariable String email)
+            throws ChangeSetPersister.NotFoundException {
+        return ResponseEntity.ok(userService.getProfileByEmail(email));
     }
 
     @PreAuthorize("hasRole('ADMIN')")
@@ -53,6 +54,5 @@ public class UserController {
     public ResponseEntity<List<User>> getActiveWorkersByDepartment(@RequestParam String department) {
         return ResponseEntity.ok(userService.getActiveWorkersByDepartment(department));
     }
-
 
 }

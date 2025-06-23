@@ -91,7 +91,7 @@ public class ReportServiceImpl implements ReportService {
 
 
     @Override
-    public Report updateStatus(String reportId, ReportStatus status, String remarks, MultipartFile afterPhoto) {
+    public Report updateStatus(String reportId, ReportStatus status,MultipartFile afterPhoto) {
         Report report = reportRepository.findById(reportId)
                 .orElseThrow(() -> new RuntimeException("Report not found"));
 
@@ -134,7 +134,7 @@ public class ReportServiceImpl implements ReportService {
         }
 
         report.setAssignedWorkerId(workerId);
-        report.setStatus(ReportStatus.IN_PROGRESS);
+        report.setStatus(ReportStatus.ASSIGNED);
         report.setUpdatedAt(LocalDateTime.now());
 
         return reportRepository.save(report);

@@ -66,14 +66,13 @@ public class ReportController {
     }
 
 
-    @PostMapping("/worker/update-status")
-    @PreAuthorize("hasRole('WORKER')")
+    @PutMapping("/worker/update_status")
+
     public ResponseEntity<Report> updateReportStatus(
             @RequestParam String reportId,
             @RequestParam ReportStatus status,
-            @RequestParam(required = false) String remarks,
             @RequestParam(required = false) MultipartFile afterPhoto) {
-        return ResponseEntity.ok(reportService.updateStatus(reportId, status, remarks, afterPhoto));
+        return ResponseEntity.ok(reportService.updateStatus(reportId, status, afterPhoto));
     }
 
     // --- ADMIN ---
