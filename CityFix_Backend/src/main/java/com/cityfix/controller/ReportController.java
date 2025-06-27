@@ -15,8 +15,9 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
 
+@CrossOrigin("http://localhost:5173")
 @RestController
-@RequestMapping("/api/reports")
+@RequestMapping("/reports")
 @RequiredArgsConstructor
 public class ReportController {
 
@@ -24,30 +25,30 @@ public class ReportController {
 
     // --- CITIZEN ---
 
-    @PostMapping
-    @PreAuthorize("hasRole('USER')")
+    @PostMapping("/citizen/create")
+
     public ResponseEntity<Report> createReport(
             @ModelAttribute ReportRequestDTO reportDTO,
             @RequestParam String citizenId) {
         return ResponseEntity.ok(reportService.createReport(reportDTO, citizenId));
     }
 
-    @GetMapping("/me")
-    @PreAuthorize("hasRole('USER')")
+    @GetMapping("/citizen/me")
+
     public ResponseEntity<List<Report>> getMyReports(@RequestParam String citizenId) {
         return ResponseEntity.ok(reportService.getMyReports(citizenId));
     }
 
-//    @PutMapping("/update")
-//    @PreAuthorize("hasRole('USER')")
-//    public ResponseEntity<Report> updateReport(
-//            @RequestParam String reportId,
-//            @RequestBody ReportUpdateDTO dto,
-//            @RequestParam String citizenId) {
-//        return ResponseEntity.ok(reportService.updateReport(reportId, dto, citizenId));
-//    }
+    @PutMapping("/citizen/update-report")
 
-    @DeleteMapping
+    public ResponseEntity<Report> updateReport(
+            @RequestParam String reportId,
+            @RequestBody ReportUpdateDTO dto,
+            @RequestParam String citizenId) {
+        return ResponseEntity.ok(reportService.updateReport(reportId, dto, citizenId));
+    }
+
+    @DeleteMapping("/citizen")
     @PreAuthorize("hasRole('USER')")
     public ResponseEntity<Void> deleteReport(@RequestParam String reportId,
                                              @RequestParam String citizenId) {
@@ -57,25 +58,26 @@ public class ReportController {
 
     // --- WORKER ---
 
-    @GetMapping("/assigned")
+    @GetMapping("/worker/assigned")
     @PreAuthorize("hasRole('WORKER')")
-    public ResponseEntity<List<Report>> getAssignedReports(@RequestParam String workerId) {
-        return ResponseEntity.ok(reportService.getReportsAssignedToWorker(workerId));
+    public ResponseEntity<List<Report>> getAssignedReports(@RequestParam String workerId,
+                                                           @RequestParam(required = false) ReportStatus status) {
+        return ResponseEntity.ok(reportService.getReportsAssignedToWorker(workerId, status));
     }
 
-    @PostMapping("/update-status")
-    @PreAuthorize("hasRole('WORKER')")
+
+    @PutMapping("/worker/update_status")
+
     public ResponseEntity<Report> updateReportStatus(
             @RequestParam String reportId,
             @RequestParam ReportStatus status,
-            @RequestParam(required = false) String remarks,
             @RequestParam(required = false) MultipartFile afterPhoto) {
-        return ResponseEntity.ok(reportService.updateStatus(reportId, status, remarks, afterPhoto));
+        return ResponseEntity.ok(reportService.updateStatus(reportId, status, afterPhoto));
     }
 
     // --- ADMIN ---
 
-    @GetMapping
+    @GetMapping("/admin/all-reports")
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<List<Report>> getAllReports( @RequestParam(required = false) ReportStatus status,
                                                        @RequestParam(required = false) Department department,
@@ -94,8 +96,8 @@ public class ReportController {
         return ResponseEntity.ok(reportService.getAllReports(filter));
     }
 
-    @PostMapping("/assign")
-    @PreAuthorize("hasRole('ADMIN')")
+    @PostMapping("/admin/assign-reports")
+
     public ResponseEntity<Report> assignReport(@RequestParam String reportId,
                                                @RequestParam String workerId) {
         return ResponseEntity.ok(reportService.assignReport(reportId, workerId));

@@ -79,13 +79,19 @@ public class ReportServiceImpl implements ReportService {
         reportRepository.delete(report);
     }
 
-    @Override
-    public List<Report> getReportsAssignedToWorker(String workerId) {
-        return reportRepository.findByAssignedWorkerId(workerId);
+    public List<Report> getReportsAssignedToWorker(String workerId, ReportStatus status) {
+        if (status == null) {
+            // return all reports assigned to this worker
+            return reportRepository.findByAssignedWorkerId(workerId);
+        } else {
+            // return filtered reports based on status
+            return reportRepository.findByAssignedWorkerIdAndStatus(workerId, status);
+        }
     }
 
+
     @Override
-    public Report updateStatus(String reportId, ReportStatus status, String remarks, MultipartFile afterPhoto) {
+    public Report updateStatus(String reportId, ReportStatus status,MultipartFile afterPhoto) {
         Report report = reportRepository.findById(reportId)
                 .orElseThrow(() -> new RuntimeException("Report not found"));
 
@@ -128,9 +134,12 @@ public class ReportServiceImpl implements ReportService {
         }
 
         report.setAssignedWorkerId(workerId);
-        report.setStatus(ReportStatus.IN_PROGRESS);
+        report.setStatus(ReportStatus.ASSIGNED);
         report.setUpdatedAt(LocalDateTime.now());
 
         return reportRepository.save(report);
     }
+
+
+
 }

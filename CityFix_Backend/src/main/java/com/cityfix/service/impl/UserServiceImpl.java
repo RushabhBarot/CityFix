@@ -17,8 +17,13 @@ public class UserServiceImpl implements UserService {
     private final UserRepository userRepo;
 
     @Override
-    public User getProfile(String userId) throws ChangeSetPersister.NotFoundException {
-        return userRepo.findById(userId).orElseThrow(() -> new ChangeSetPersister.NotFoundException());
+    public User getProfile(String email) throws ChangeSetPersister.NotFoundException {
+        return userRepo.findById(email).orElseThrow(() -> new ChangeSetPersister.NotFoundException());
+    }
+
+    @Override
+    public User getProfileByEmail(String email) throws ChangeSetPersister.NotFoundException {
+        return userRepo.findByEmail(email).orElseThrow(() -> new ChangeSetPersister.NotFoundException());
     }
 
     @Override
@@ -38,5 +43,14 @@ public class UserServiceImpl implements UserService {
         return userRepo.save(user);
     }
 
-}
+    @Override
+    public List<User> getUsersByRoleAndActive(com.cityfix.entity.enums.Role role, boolean active) {
+        return userRepo.findByRoleAndActive(role, active);
+    }
 
+    @Override
+    public List<User> getActiveWorkersByDepartment(String department) {
+        return userRepo.findByRoleAndActiveAndDepartment(Role.WORKER, true, department);
+    }
+
+}
