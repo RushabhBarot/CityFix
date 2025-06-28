@@ -1,4 +1,4 @@
-import React, { useContext, useEffect, useState } from 'react';
+import React, { useContext, useEffect, useState, useCallback } from 'react';
 import { AuthContext } from '../Auth/AuthContext';
 import './User_Dashboard.css';
 
@@ -31,72 +31,108 @@ const AdminDashboard = () => {
 
   const accessToken = user?.accessToken;
 
-  // Fetch all reports
-  const fetchReports = () => {
+  // Fetch all reports - memoized with useCallback
+  const fetchReports = useCallback(() => {
+    if (!accessToken) {
+      console.log('No access token available for fetchReports');
+      return;
+    }
+    
+    console.log('Fetching reports with token:', accessToken.substring(0, 20) + '...');
     setLoading(true);
     let url = `${API_BASE}/reports/admin/all-reports`;
     const params = [];
     if (filter.status) params.push(`status=${filter.status}`);
     if (filter.department) params.push(`department=${filter.department}`);
     if (params.length) url += '?' + params.join('&');
+    
+    console.log('Fetching reports from:', url);
+    
     fetch(url, {
       headers: {
         'Authorization': `Bearer ${accessToken}`
       }
     })
-      .then(res => res.json())
-      .then(data => Array.isArray(data) ? setReports(data) : setReports([]))
-      .catch(() => setError('Failed to fetch reports'))
+      .then(res => {
+        console.log('Reports response status:', res.status);
+        if (!res.ok) {
+          throw new Error(`HTTP ${res.status}: ${res.statusText}`);
+        }
+        return res.json();
+      })
+      .then(data => {
+        console.log('Reports data received:', data);
+        Array.isArray(data) ? setReports(data) : setReports([]);
+      })
+      .catch((error) => {
+        console.error('Error fetching reports:', error);
+        setError('Failed to fetch reports: ' + error.message);
+      })
       .finally(() => setLoading(false));
-  };
+  }, [accessToken, filter.status, filter.department]);
 
-  // Fetch pending workers
-  const fetchPendingWorkers = () => {
+  // Fetch pending workers - memoized with useCallback
+  const fetchPendingWorkers = useCallback(() => {
+    if (!accessToken) {
+      console.log('No access token available for fetchPendingWorkers');
+      return;
+    }
+    
+    console.log('Fetching pending workers with token:', accessToken.substring(0, 20) + '...');
+    
     fetch(`${API_BASE}/users/admin/pending-workers`, {
       headers: {
         'Authorization': `Bearer ${accessToken}`
       }
     })
-      .then(res => res.json())
-      .then(data => Array.isArray(data) ? setPendingWorkers(data) : setPendingWorkers([]))
-      .catch(() => setError('Failed to fetch pending workers'));
-  };
-
-  // Fetch workers for a department (only if not already fetched)
-  const fetchWorkersForDepartment = async (department) => {
-    if (!department) return [];
-    if (departmentWorkers[department]) return departmentWorkers[department]; // already fetched
-    try {
-      const res = await fetch(`${API_BASE}/users/admin/active-workers?department=${department}`, {
-        headers: {
-          'Authorization': `Bearer ${accessToken}`
+      .then(res => {
+        console.log('Pending workers response status:', res.status);
+        if (!res.ok) {
+          throw new Error(`HTTP ${res.status}: ${res.statusText}`);
         }
+        return res.json();
+      })
+      .then(data => {
+        console.log('Pending workers data received:', data);
+        Array.isArray(data) ? setPendingWorkers(data) : setPendingWorkers([]);
+      })
+      .catch((error) => {
+        console.error('Error fetching pending workers:', error);
+        setError('Failed to fetch pending workers: ' + error.message);
       });
-      if (!res.ok) throw new Error('Failed to fetch');
-      const data = await res.json();
-      setDepartmentWorkers(prev => ({ ...prev, [department]: Array.isArray(data) ? data : [] }));
-      return Array.isArray(data) ? data : [];
-    } catch {
-      setDepartmentWorkers(prev => ({ ...prev, [department]: [] }));
-      setError('Failed to fetch workers for department');
-      return [];
-    }
-  };
+  }, [accessToken]);
 
   // Fetch all workers for all departments in reports
   useEffect(() => {
-    const uniqueDepartments = Array.from(new Set(reports.map(r => r.department).filter(Boolean)));
-    uniqueDepartments.forEach(dept => {
-      fetchWorkersForDepartment(dept);
-    });
-    // eslint-disable-next-line
-  }, [reports]);
+    if (reports.length > 0 && accessToken) {
+      const uniqueDepartments = Array.from(new Set(reports.map(r => r.department).filter(Boolean)));
+      uniqueDepartments.forEach(dept => {
+        if (!departmentWorkers[dept]) {
+          // Fetch workers for this department
+          fetch(`${API_BASE}/users/admin/active-workers?department=${dept}`, {
+            headers: {
+              'Authorization': `Bearer ${accessToken}`
+            }
+          })
+            .then(res => res.json())
+            .then(data => {
+              const workers = Array.isArray(data) ? data : [];
+              setDepartmentWorkers(prev => ({ ...prev, [dept]: workers }));
+            })
+            .catch(() => {
+              setDepartmentWorkers(prev => ({ ...prev, [dept]: [] }));
+              setError('Failed to fetch workers for department');
+            });
+        }
+      });
+    }
+  }, [reports, accessToken, departmentWorkers]);
 
+  // Main data fetching effect
   useEffect(() => {
     fetchReports();
     fetchPendingWorkers();
-    // eslint-disable-next-line
-  }, [accessToken, filter.status, filter.department]);
+  }, [fetchReports, fetchPendingWorkers]);
 
   // Approve worker
   const handleApproveWorker = async (workerId) => {
@@ -113,8 +149,8 @@ const AdminDashboard = () => {
         return;
       }
       fetchPendingWorkers();
-      // Optionally, refresh all department workers after approval
-      setDepartmentWorkers({}); // Clear cache to force refetch
+      // Clear cache to force refetch
+      setDepartmentWorkers({});
       fetchReports(); // Refetch reports to update UI
     } catch {
       setError('Failed to approve worker');
@@ -242,12 +278,8 @@ const AdminDashboard = () => {
                 value={assignWorker[report.id] || ''}
                 onChange={async e => {
                   setAssignWorker(a => ({ ...a, [report.id]: e.target.value }));
-                  if (!departmentWorkers[report.department]) {
-                    await fetchWorkersForDepartment(report.department);
-                  }
                 }}
                 style={{ flex: 1 }}
-                onFocus={() => fetchWorkersForDepartment(report.department)}
               >
                 <option value="">Select worker to assign</option>
                 {getWorkersByDepartment(report.department).map(worker => (

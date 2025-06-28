@@ -1,19 +1,50 @@
 import React from 'react';
 import './Button.css';
 
-const Button = ({ children, variant = 'primary', loading = false, disabled = false, ...props }) => {
-  const baseClasses = 'w-full py-2 px-4 rounded-lg font-medium transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2';
-  const variants = {
-    primary: 'bg-blue-600 hover:bg-blue-700 text-white focus:ring-blue-500 disabled:bg-blue-300',
-    secondary: 'bg-gray-200 hover:bg-gray-300 text-gray-800 focus:ring-gray-500 disabled:bg-gray-100',
+const Button = ({ 
+  children, 
+  variant = 'primary', 
+  size = 'medium',
+  loading = false, 
+  disabled = false, 
+  icon,
+  className = '',
+  ...props 
+}) => {
+  const getVariantClass = () => {
+    switch (variant) {
+      case 'secondary': return 'secondary';
+      case 'success': return 'success';
+      case 'danger': return 'danger';
+      case 'ghost': return 'ghost';
+      case 'outline': return 'outline';
+      default: return 'primary';
+    }
   };
+
+  const getSizeClass = () => {
+    switch (size) {
+      case 'small': return 'small';
+      case 'large': return 'large';
+      default: return '';
+    }
+  };
+
+  const buttonClasses = [
+    'btn',
+    getVariantClass(),
+    getSizeClass(),
+    loading ? 'btn-loading' : '',
+    className
+  ].filter(Boolean).join(' ');
 
   return (
     <button
-      className={`btn ${variant}` + (loading ? ' btn-loading' : '')}
+      className={buttonClasses}
       disabled={disabled || loading}
       {...props}
     >
+      {icon && <span className="btn-icon">{icon}</span>}
       {loading ? (
         <div className="btn-loading">
           <div className="spinner"></div>

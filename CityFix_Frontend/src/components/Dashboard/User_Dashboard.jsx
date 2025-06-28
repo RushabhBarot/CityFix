@@ -1,7 +1,8 @@
-import React, { useContext, useEffect, useState } from 'react';
+import React, { useContext, useEffect, useState, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { AuthContext } from '../Auth/AuthContext';
 import './User_Dashboard.css';
+import { Plus, Edit, Trash2, MapPin, Calendar, Building2, AlertCircle } from 'lucide-react';
 
 const API_BASE = 'http://localhost:8080';
 
@@ -51,20 +52,39 @@ const Dashboard = () => {
   const jwtPayload = parseJwt(accessToken);
   const citizenId = jwtPayload.sub;
   console.log(citizenId);
-  // Fetch user's reports
-  useEffect(() => {
-    if (!citizenId) return;
+  
+  // Fetch user's reports - memoized with useCallback
+  const fetchReports = useCallback(async () => {
+    if (!citizenId || !accessToken) return;
+    
     setLoading(true);
-    fetch(`${API_BASE}/reports/citizen/me?citizenId=${citizenId}`, {
-      headers: {
-        'Authorization': `Bearer ${accessToken}`
+    try {
+      const response = await fetch(`${API_BASE}/reports/citizen/me?citizenId=${citizenId}`, {
+        headers: {
+          'Authorization': `Bearer ${accessToken}`
+        }
+      });
+      
+      if (response.status === 401) {
+        logout();
+        navigate('/login');
+        return;
       }
-    })
-      .then(res => res.json())
-      .then(data => Array.isArray(data) ? setReports(data) : setReports([]))
-      .catch(() => setError('Failed to fetch reports'))
-      .finally(() => setLoading(false));
-  }, [citizenId, accessToken]);
+      
+      const data = await response.json();
+      setReports(Array.isArray(data) ? data : []);
+    } catch (error) {
+      console.error('Error fetching reports:', error);
+      setError('Failed to fetch reports');
+    } finally {
+      setLoading(false);
+    }
+  }, [citizenId, accessToken, logout, navigate]);
+
+  // Fetch reports on mount and when dependencies change
+  useEffect(() => {
+    fetchReports();
+  }, [fetchReports]);
 
   // Handle create report
   const handleCreate = async (e) => {
@@ -87,19 +107,9 @@ const Dashboard = () => {
       setShowForm(false);
       setForm({ description: '', location: '', latitude: '', longitude: '', department: '', beforePhoto: null });
       // Refresh reports
-      const res = await fetch(`${API_BASE}/reports/citizen/me?citizenId=${citizenId}`, {
-        headers: {
-          'Authorization': `Bearer ${accessToken}`
-        }
-      });
-      if (res.status === 401) {
-        logout();
-        navigate('/login');
-        return;
-      }
-      const reportsData = await res.json();
-      setReports(Array.isArray(reportsData) ? reportsData : []);
-    } catch {
+      await fetchReports();
+    } catch (error) {
+      console.error('Error creating report:', error);
       setError('Failed to create report');
     }
   };
@@ -120,7 +130,8 @@ const Dashboard = () => {
         return;
       }
       setReports(reports.filter(r => r.id !== id));
-    } catch {
+    } catch (error) {
+      console.error('Error deleting report:', error);
       setError('Failed to delete report');
     }
   };
@@ -158,99 +169,230 @@ const Dashboard = () => {
       }
       setEditId(null);
       // Refresh reports
-      const res = await fetch(`${API_BASE}/reports/citizen/me?citizenId=${citizenId}`, {
-        headers: {
-          'Authorization': `Bearer ${accessToken}`
-        }
-      });
-      if (res.status === 401) {
-        logout();
-        navigate('/login');
-        return;
-      }
-      const reportsData = await res.json();
-      setReports(Array.isArray(reportsData) ? reportsData : []);
-    } catch {
+      await fetchReports();
+    } catch (error) {
+      console.error('Error updating report:', error);
       setError('Failed to update report');
     }
   };
 
-  const handleLogout = () => {
-    logout();
-    navigate('/login');
+  const getStatusClass = (status) => {
+    switch (status?.toLowerCase()) {
+      case 'pending': return 'pending';
+      case 'in_progress': return 'in-progress';
+      case 'completed': return 'completed';
+      case 'rejected': return 'rejected';
+      default: return 'pending';
+    }
+  };
+
+  const formatDate = (dateString) => {
+    return new Date(dateString).toLocaleDateString('en-US', {
+      year: 'numeric',
+      month: 'short',
+      day: 'numeric'
+    });
   };
 
   return (
     <div className="dashboard-container">
-      <div className="dashboard-header">
-        <h1>My Reports</h1>
-        <button className="dashboard-logout" onClick={handleLogout}>Logout</button>
-      </div>
-      <button className="dashboard-create-btn" onClick={() => setShowForm(!showForm)}>
-        {showForm ? 'Cancel' : 'Create New Report'}
-      </button>
-      {showForm && (
-        <form className="dashboard-form" onSubmit={handleCreate}>
-          <input type="text" placeholder="Description" value={form.description} onChange={e => setForm(f => ({ ...f, description: e.target.value }))} required />
-          <input type="text" placeholder="Location" value={form.location} onChange={e => setForm(f => ({ ...f, location: e.target.value }))} required />
-          {/* <input type="number" placeholder="Latitude" value={form.latitude} onChange={e => setForm(f => ({ ...f, latitude: e.target.value }))} required />
-          <input type="number" placeholder="Longitude" value={form.longitude} onChange={e => setForm(f => ({ ...f, longitude: e.target.value }))} required /> */}
-          <select value={form.department} onChange={e => setForm(f => ({ ...f, department: e.target.value }))} required>
-            <option value="">Select Department</option>
-            <option value="WASTE_MANAGEMENT">Waste Management</option>
-            <option value="PARKING_ENFORCEMENT">Parking Enforcement</option>
-            <option value="ROAD_MAINTENANCE">Road Maintenance</option>
-          </select>
-          <input type="file" accept="image/*" onChange={e => setForm(f => ({ ...f, beforePhoto: e.target.files[0] }))} required />
-          <button type="submit">Submit</button>
-        </form>
-      )}
-      {loading ? <div className="dashboard-loading">Loading...</div> : null}
-      {error && <div className="dashboard-error">{error}</div>}
-      <div className="dashboard-reports">
-        {reports.map(report => (
-          <div className="dashboard-report-card" key={report.id}>
-            {editId === report.id ? (
-              <form className="dashboard-form" onSubmit={handleUpdate}>
-                <input type="text" placeholder="Description" value={editForm.description} onChange={e => setEditForm(f => ({ ...f, description: e.target.value }))} required />
-                <input type="text" placeholder="Location" value={editForm.location} onChange={e => setEditForm(f => ({ ...f, location: e.target.value }))} required />
-                {/* <input type="number" placeholder="Latitude" value={editForm.latitude} onChange={e => setEditForm(f => ({ ...f, latitude: e.target.value }))} required />
-                <input type="number" placeholder="Longitude" value={editForm.longitude} onChange={e => setEditForm(f => ({ ...f, longitude: e.target.value }))} required /> */}
-                <select value={editForm.department} onChange={e => setEditForm(f => ({ ...f, department: e.target.value }))} required>
-                  <option value="">Select Department</option>
-                  <option value="WASTE_MANAGEMENT">Waste Management</option>
-                  <option value="PARKING_ENFORCEMENT">Parking Enforcement</option>
-                  <option value="ROAD_MAINTENANCE">Road Maintenance</option>
-                </select>
-                <input type="number" placeholder="Rating (1-5)" value={editForm.rating} onChange={e => setEditForm(f => ({ ...f, rating: e.target.value }))} />
-                <label><input type="checkbox" checked={editForm.citizenVerified} onChange={e => setEditForm(f => ({ ...f, citizenVerified: e.target.checked }))} /> Verified</label>
-                <button type="submit">Save</button>
-                <button type="button" onClick={() => setEditId(null)}>Cancel</button>
-              </form>
-            ) : (
-              <>
-                <div><b>Description:</b> {report.description}</div>
-                <div><b>Location:</b> {report.location}</div>
-                {/* <div><b>Latitude:</b> {report.latitude}</div>
-                <div><b>Longitude:</b> {report.longitude}</div> */}
-                <div><b>Department:</b> {report.department}</div>
-                <div><b>Status:</b> {report.status}</div>
-                <div><b>Created:</b> {new Date(report.createdAt).toLocaleString()}</div>
-                {report.beforePhotoUrl && (
-                  <img
-                    src={`http://localhost:8080/${report.beforePhotoUrl.replace(/\\/g, '/').replace(/\\/g, '/')}`}
-                    alt="Before"
-                    className="dashboard-report-img"
-                  />
-                )}
-                <div className="dashboard-report-actions">
-                  <button onClick={() => startEdit(report)}>Edit</button>
-                  <button onClick={() => handleDelete(report.id)}>Delete</button>
-                </div>
-              </>
-            )}
+      <div className="dashboard-content">
+        <div className="dashboard-header">
+          <div className="dashboard-header-content">
+            <h1>My Reports</h1>
+            <p className="dashboard-subtitle">Manage and track your city issue reports</p>
           </div>
-        ))}
+          <div className="dashboard-header-actions">
+            <button className="dashboard-nav-btn" onClick={() => navigate('/')}>
+              Home
+            </button>
+            <button className="dashboard-nav-btn" onClick={() => navigate('/profile')}>
+              Profile
+            </button>
+            <button className="dashboard-logout" onClick={() => {
+              logout();
+              navigate('/login');
+            }}>
+              Logout
+            </button>
+          </div>
+        </div>
+        
+        <button className="dashboard-create-btn" onClick={() => setShowForm(!showForm)}>
+          {showForm ? 'Cancel' : 'Create New Report'}
+        </button>
+        
+        {showForm && (
+          <form className="dashboard-form" onSubmit={handleCreate}>
+            <div className="dashboard-form-grid">
+              <input 
+                type="text" 
+                placeholder="Description" 
+                value={form.description} 
+                onChange={e => setForm(f => ({ ...f, description: e.target.value }))} 
+                required 
+              />
+              <input 
+                type="text" 
+                placeholder="Location" 
+                value={form.location} 
+                onChange={e => setForm(f => ({ ...f, location: e.target.value }))} 
+                required 
+              />
+              <select 
+                value={form.department} 
+                onChange={e => setForm(f => ({ ...f, department: e.target.value }))} 
+                required
+              >
+                <option value="">Select Department</option>
+                <option value="WASTE_MANAGEMENT">Waste Management</option>
+                <option value="ROAD_MAINTENANCE">Road Maintenance</option>
+                <option value="WATER_SUPPLY">Water Supply</option>
+                <option value="ELECTRICITY">Electricity</option>
+                <option value="PUBLIC_SAFETY">Public Safety</option>
+                <option value="PARKS_RECREATION">Parks & Recreation</option>
+              </select>
+              <input 
+                type="file" 
+                accept="image/*" 
+                onChange={e => setForm(f => ({ ...f, beforePhoto: e.target.files[0] }))} 
+              />
+            </div>
+            <div className="dashboard-form-actions">
+              <button type="button" onClick={() => setShowForm(false)}>Cancel</button>
+              <button type="submit">Create Report</button>
+            </div>
+          </form>
+        )}
+
+        {editId && (
+          <form className="dashboard-form" onSubmit={handleUpdate}>
+            <div className="dashboard-form-grid">
+              <input 
+                type="text" 
+                placeholder="Description" 
+                value={editForm.description} 
+                onChange={e => setEditForm(f => ({ ...f, description: e.target.value }))} 
+                required 
+              />
+              <input 
+                type="text" 
+                placeholder="Location" 
+                value={editForm.location} 
+                onChange={e => setEditForm(f => ({ ...f, location: e.target.value }))} 
+                required 
+              />
+              <select 
+                value={editForm.department} 
+                onChange={e => setEditForm(f => ({ ...f, department: e.target.value }))} 
+                required
+              >
+                <option value="">Select Department</option>
+                <option value="WASTE_MANAGEMENT">Waste Management</option>
+                <option value="ROAD_MAINTENANCE">Road Maintenance</option>
+                <option value="WATER_SUPPLY">Water Supply</option>
+                <option value="ELECTRICITY">Electricity</option>
+                <option value="PUBLIC_SAFETY">Public Safety</option>
+                <option value="PARKS_RECREATION">Parks & Recreation</option>
+              </select>
+              <input 
+                type="number" 
+                placeholder="Rating (1-5)" 
+                min="1" 
+                max="5" 
+                value={editForm.rating} 
+                onChange={e => setEditForm(f => ({ ...f, rating: e.target.value }))} 
+              />
+            </div>
+            <div className="dashboard-form-actions">
+              <button type="button" onClick={() => setEditId(null)}>Cancel</button>
+              <button type="submit">Update Report</button>
+            </div>
+          </form>
+        )}
+
+        {loading && <div className="dashboard-loading">Loading reports...</div>}
+        {error && <div className="dashboard-error">{error}</div>}
+
+        {!loading && !error && reports.length === 0 && (
+          <div className="dashboard-empty">
+            <div className="dashboard-empty-icon">
+              <AlertCircle size={24} />
+            </div>
+            <h3>No Reports Yet</h3>
+            <p>Start by creating your first report to help improve our city!</p>
+            <button className="dashboard-create-btn" onClick={() => setShowForm(true)}>
+              Create Your First Report
+            </button>
+          </div>
+        )}
+
+        {!loading && !error && reports.length > 0 && (
+          <div className="dashboard-reports">
+            {reports.map((report) => (
+              <div key={report.id} className="dashboard-report-card">
+                <div className="dashboard-report-header">
+                  <h3 className="dashboard-report-title">{report.description}</h3>
+                  <span className={`dashboard-report-status ${getStatusClass(report.status)}`}>
+                    {report.status?.replace('_', ' ')}
+                  </span>
+                </div>
+                
+                <div className="dashboard-report-content">
+                  <p className="dashboard-report-description">{report.description}</p>
+                  
+                  <div className="dashboard-report-details">
+                    <div className="dashboard-report-detail">
+                      <MapPin size={14} />
+                      <strong>Location:</strong> {report.location}
+                    </div>
+                    <div className="dashboard-report-detail">
+                      <Building2 size={14} />
+                      <strong>Department:</strong> {report.department?.replace('_', ' ')}
+                    </div>
+                    <div className="dashboard-report-detail">
+                      <Calendar size={14} />
+                      <strong>Created:</strong> {formatDate(report.createdAt)}
+                    </div>
+                    {report.rating && (
+                      <div className="dashboard-report-detail">
+                        <strong>Rating:</strong> {report.rating}/5
+                      </div>
+                    )}
+                  </div>
+                  
+                  {report.beforePhoto && (
+                    <img 
+                      src={`${API_BASE}/uploads/${report.beforePhoto}`} 
+                      alt="Before" 
+                      className="dashboard-report-img"
+                      onError={(e) => {
+                        e.target.style.display = 'none';
+                      }}
+                    />
+                  )}
+                </div>
+                
+                <div className="dashboard-report-actions">
+                  <button 
+                    className="edit" 
+                    onClick={() => startEdit(report)}
+                  >
+                    <Edit size={14} />
+                    Edit
+                  </button>
+                  <button 
+                    className="delete" 
+                    onClick={() => handleDelete(report.id)}
+                  >
+                    <Trash2 size={14} />
+                    Delete
+                  </button>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
       </div>
     </div>
   );

@@ -1,4 +1,4 @@
-import React, { useContext, useEffect, useState } from 'react';
+import React, { useContext, useEffect, useState, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { AuthContext } from '../Auth/AuthContext';
 import './User_Dashboard.css';
@@ -37,28 +37,48 @@ const WorkerDashboard = () => {
   const jwtPayload = parseJwt(accessToken);
   const workerId = jwtPayload.sub;
 
-  // Fetch worker profile to get 'active' status and _id
-  useEffect(() => {
+  // Fetch worker profile to get 'active' status and _id - memoized
+  const fetchWorkerProfile = useCallback(async () => {
     if (!workerId || !accessToken) return;
+    
     setProfileLoading(true);
-    apiService.getWorkerProfile(workerId, accessToken)
-      .then(profile => {
-        setActive(profile.active);
-        setWorkerDbId(profile.id);
-      })
-      .catch(() => setActive(false))
-      .finally(() => setProfileLoading(false));
+    try {
+      const profile = await apiService.getWorkerProfile(workerId, accessToken);
+      setActive(profile.active);
+      setWorkerDbId(profile.id);
+    } catch (error) {
+      console.error('Error fetching worker profile:', error);
+      setActive(false);
+    } finally {
+      setProfileLoading(false);
+    }
   }, [workerId, accessToken]);
 
-  // Fetch assigned reports
-  useEffect(() => {
+  // Fetch assigned reports - memoized
+  const fetchAssignedReports = useCallback(async () => {
     if (!workerDbId || !accessToken || !active) return;
+    
     setLoading(true);
-    apiService.getAssignedReports(workerDbId, accessToken)
-      .then(data => Array.isArray(data) ? setReports(data) : setReports([]))
-      .catch(() => setError('Failed to fetch reports'))
-      .finally(() => setLoading(false));
+    try {
+      const data = await apiService.getAssignedReports(workerDbId, accessToken);
+      setReports(Array.isArray(data) ? data : []);
+    } catch (error) {
+      console.error('Error fetching assigned reports:', error);
+      setError('Failed to fetch reports');
+    } finally {
+      setLoading(false);
+    }
   }, [workerDbId, accessToken, active]);
+
+  // Fetch worker profile on mount
+  useEffect(() => {
+    fetchWorkerProfile();
+  }, [fetchWorkerProfile]);
+
+  // Fetch assigned reports when dependencies change
+  useEffect(() => {
+    fetchAssignedReports();
+  }, [fetchAssignedReports]);
 
   // Handle status update
   const handleStatusUpdate = async (reportId) => {
@@ -104,8 +124,7 @@ const WorkerDashboard = () => {
       }
 
       // Refresh reports
-      const reportsData = await apiService.getAssignedReports(workerDbId, accessToken);
-      setReports(Array.isArray(reportsData) ? reportsData : []);
+      await fetchAssignedReports();
       
       // Clear the form state
       setStatusUpdate(s => ({ ...s, [reportId]: '' }));
@@ -127,8 +146,21 @@ const WorkerDashboard = () => {
   return (
     <div className="dashboard-container">
       <div className="dashboard-header">
-        <h1>Assigned Reports</h1>
-        <button className="dashboard-logout" onClick={handleLogout}>Logout</button>
+        <div className="dashboard-header-content">
+          <h1>Assigned Reports</h1>
+        </div>
+        <div className="dashboard-header-actions">
+          <button className="dashboard-nav-btn" onClick={() => navigate('/')}>
+            Home
+          </button>
+          <button className="dashboard-nav-btn" onClick={() => navigate('/profile')}>
+            Profile
+          </button>
+          <button className="dashboard-nav-btn active" onClick={() => navigate('/assigned-reports')}>
+            Assigned Reports
+          </button>
+          <button className="dashboard-logout" onClick={handleLogout}>Logout</button>
+        </div>
       </div>
       {profileLoading ? <div className="dashboard-loading">Checking your status...</div> : null}
       {!profileLoading && !active && (

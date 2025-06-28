@@ -1,5 +1,5 @@
 import React, { useContext } from 'react';
-import { Navigate } from 'react-router-dom';
+import { Navigate, useLocation } from 'react-router-dom';
 import { AuthContext } from '../components/Auth/AuthContext';
 
 const parseJwt = (token) => {
@@ -17,6 +17,7 @@ const parseJwt = (token) => {
 
 const PublicRoute = ({ children }) => {
   const { user, loading } = useContext(AuthContext);
+  const location = useLocation();
 
   if (loading) {
     return (
@@ -26,7 +27,13 @@ const PublicRoute = ({ children }) => {
     );
   }
 
-  if (user && user.accessToken) {
+  // Allow authenticated users to access the home page
+  if (user && user.accessToken && location.pathname === '/') {
+    return children;
+  }
+
+  // For login and register pages, redirect authenticated users to their dashboard
+  if (user && user.accessToken && (location.pathname === '/login' || location.pathname === '/register')) {
     const jwtPayload = parseJwt(user.accessToken);
     let role = null;
     if (Array.isArray(jwtPayload.roles)) {
@@ -36,6 +43,12 @@ const PublicRoute = ({ children }) => {
     } else if (typeof jwtPayload.role === 'string') {
       role = jwtPayload.role;
     }
+    
+    // Remove ROLE_ prefix if present
+    if (role && role.startsWith('ROLE_')) {
+      role = role.substring(5);
+    }
+    
     if (role === 'ADMIN') {
       return <Navigate to="/admin-dashboard" replace />;
     } else if (role === 'WORKER') {
