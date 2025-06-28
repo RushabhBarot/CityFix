@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { AuthContext } from '../Auth/AuthContext';
 import './User_Dashboard.css';
 import { Plus, Edit, Trash2, MapPin, Calendar, Building2, AlertCircle } from 'lucide-react';
+import LocationInput from '../UI/LocationInput';
 
 const API_BASE = 'http://localhost:8080';
 
@@ -232,12 +233,10 @@ const Dashboard = () => {
                 onChange={e => setForm(f => ({ ...f, description: e.target.value }))} 
                 required 
               />
-              <input 
-                type="text" 
-                placeholder="Location" 
+              <LocationInput 
                 value={form.location} 
-                onChange={e => setForm(f => ({ ...f, location: e.target.value }))} 
-                required 
+                onChange={(location) => setForm(f => ({ ...f, location: location, latitude: '', longitude: '' }))} 
+                required
               />
               <select 
                 value={form.department} 
@@ -275,12 +274,10 @@ const Dashboard = () => {
                 onChange={e => setEditForm(f => ({ ...f, description: e.target.value }))} 
                 required 
               />
-              <input 
-                type="text" 
-                placeholder="Location" 
+              <LocationInput 
                 value={editForm.location} 
-                onChange={e => setEditForm(f => ({ ...f, location: e.target.value }))} 
-                required 
+                onChange={(location) => setEditForm(f => ({ ...f, location: location, latitude: '', longitude: '' }))} 
+                required
               />
               <select 
                 value={editForm.department} 

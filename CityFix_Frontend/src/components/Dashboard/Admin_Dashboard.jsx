@@ -1,6 +1,7 @@
 import React, { useContext, useEffect, useState, useCallback } from 'react';
 import { AuthContext } from '../Auth/AuthContext';
 import './User_Dashboard.css';
+import { useNavigate } from 'react-router-dom';
 
 const API_BASE = 'http://localhost:8080';
 
@@ -28,6 +29,7 @@ const AdminDashboard = () => {
   const [approvingWorkerId, setApprovingWorkerId] = useState(null);
   // Map of department to workers
   const [departmentWorkers, setDepartmentWorkers] = useState({});
+  const navigate = useNavigate();
 
   const accessToken = user?.accessToken;
 
@@ -194,8 +196,22 @@ const AdminDashboard = () => {
   return (
     <div className="dashboard-container">
       <div className="dashboard-header">
-        <h1>All Reports (Admin)</h1>
-        <button className="dashboard-logout" onClick={handleLogout}>Logout</button>
+        <div className="dashboard-header-content">
+          <h1>All Reports (Admin)</h1>
+          <p className="dashboard-subtitle">Manage and monitor all city issue reports</p>
+        </div>
+        <div className="dashboard-header-actions">
+          <button className="dashboard-nav-btn" onClick={() => navigate('/')}>
+            Home
+          </button>
+          <button className="dashboard-nav-btn" onClick={() => navigate('/profile')}>
+            Profile
+          </button>
+          <button className="dashboard-nav-btn active">
+            All Reports
+          </button>
+          <button className="dashboard-logout" onClick={handleLogout}>Logout</button>
+        </div>
       </div>
       <div style={{ display: 'flex', gap: 16, marginBottom: 24 }}>
         <select value={filter.status} onChange={e => setFilter(f => ({ ...f, status: e.target.value }))}>

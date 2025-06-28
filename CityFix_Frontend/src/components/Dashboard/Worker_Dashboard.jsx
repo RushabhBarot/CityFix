@@ -148,6 +148,7 @@ const WorkerDashboard = () => {
       <div className="dashboard-header">
         <div className="dashboard-header-content">
           <h1>Assigned Reports</h1>
+          <p className="dashboard-subtitle">Manage your assigned city issue reports</p>
         </div>
         <div className="dashboard-header-actions">
           <button className="dashboard-nav-btn" onClick={() => navigate('/')}>
@@ -156,7 +157,7 @@ const WorkerDashboard = () => {
           <button className="dashboard-nav-btn" onClick={() => navigate('/profile')}>
             Profile
           </button>
-          <button className="dashboard-nav-btn active" onClick={() => navigate('/assigned-reports')}>
+          <button className="dashboard-nav-btn active">
             Assigned Reports
           </button>
           <button className="dashboard-logout" onClick={handleLogout}>Logout</button>
