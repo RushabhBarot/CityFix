@@ -14,5 +14,7 @@ public interface ReportRepository extends MongoRepository<Report,String> {
 
     List<Report> findByAssignedWorkerId(String workerId);
     List<Report> findByAssignedWorkerIdAndStatus(String workerId, ReportStatus status);
+    
+    long countByStatus(ReportStatus status);
 
 }

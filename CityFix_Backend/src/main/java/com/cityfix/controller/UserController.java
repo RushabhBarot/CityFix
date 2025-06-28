@@ -17,11 +17,18 @@ public class UserController {
 
     private final UserService userService;
 
-    // 1. Get current user profile (accessible to any logged-in user)
-    @PreAuthorize("hasRole('USER')")
-    @GetMapping("/citizen/profile/{id}")
-    public ResponseEntity<User> getCitizenProfile(@PathVariable String id) throws ChangeSetPersister.NotFoundException {
-        return ResponseEntity.ok(userService.getProfile(id));
+    // Test endpoint to verify authentication
+    @GetMapping("/test-auth")
+    @PreAuthorize("isAuthenticated()")
+    public ResponseEntity<String> testAuth() {
+        return ResponseEntity.ok("Authentication working!");
+    }
+
+    // Get current user profile (accessible to any logged-in user)
+    @GetMapping("/citizen/profile/{email}")
+    public ResponseEntity<User> getCitizenProfile(@PathVariable String email) throws ChangeSetPersister.NotFoundException {
+        System.out.println("Citizen profile requested for email: " + email);
+        return ResponseEntity.ok(userService.getProfileByEmail(email));
     }
 
     @PreAuthorize("hasRole('WORKER')")
@@ -32,9 +39,9 @@ public class UserController {
     }
 
     @PreAuthorize("hasRole('ADMIN')")
-    @GetMapping("/admin/profile/{id}")
-    public ResponseEntity<User> getAdminProfile(@PathVariable String id) throws ChangeSetPersister.NotFoundException {
-        return ResponseEntity.ok(userService.getProfile(id));
+    @GetMapping("/admin/profile/{email}")
+    public ResponseEntity<User> getAdminProfile(@PathVariable String email) throws ChangeSetPersister.NotFoundException {
+        return ResponseEntity.ok(userService.getProfileByEmail(email));
     }
 
     @PreAuthorize("hasRole('ADMIN')")
